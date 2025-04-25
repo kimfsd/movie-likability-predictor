@@ -92,6 +92,7 @@ def delete_no_overview(final_output, unmatched_csv_path):
             return pd.Series([[], [], []])
 
     final_output[["movies_reviewed", "ratings", "overviews"]] = final_output.apply(filter_user_row, axis=1)
+    final_df["ratings"] = final_df["ratings"].apply(lambda ratings: [1 if isinstance(r, (int, float)) and r >= 4.0 else 0 for r in ratings])
     final_output = final_output[final_output["movies_reviewed"].apply(len) > 0].reset_index(drop=True)
 
     return final_output
