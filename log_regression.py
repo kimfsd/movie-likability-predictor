@@ -54,6 +54,7 @@ for idx, user_row in df.iterrows():
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
+    # let me know if we want to change this because I think the test size is too small for some of the users
     if len(np.unique(y_train)) < 2:
         print(f"Skipping user {idx}: only one class present.")
         continue
@@ -63,12 +64,12 @@ for idx, user_row in df.iterrows():
 
     y_pred = clf.predict(X_test)
 
+    # average among ALL users: each user has different preferences and therefore needed for diff logistic regressions for each
     accuracies.append(accuracy_score(y_test, y_pred))
     precisions.append(precision_score(y_test, y_pred, zero_division=0))
     recalls.append(recall_score(y_test, y_pred, zero_division=0))
     f1_scores.append(f1_score(y_test, y_pred, zero_division=0))
 
-# Print overall averages
 print("Average Accuracy:", np.mean(accuracies))
 print("Average Precision:", np.mean(precisions))
 print("Average Recall:", np.mean(recalls))
