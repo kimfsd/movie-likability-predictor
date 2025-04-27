@@ -8,13 +8,11 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 import tensorflow as tf
 
-# Load GloVe 300d embeddings
 print("Loading GloVe embeddings...")
 model = load("glove-wiki-gigaword-300")
 
-# Load both datasets
-df = pd.read_csv('final_movie_reviews.csv')          # With stopwords
-df_no_stop = pd.read_csv('final_removed_stop.csv')    # Without stopwords
+df = pd.read_csv('final_movie_reviews.csv')
+df_no_stop = pd.read_csv('final_removed_stop.csv')
 
 def safe_literal_eval(s):
     if pd.isna(s):
@@ -69,7 +67,6 @@ def build_and_train_nn(X_train, y_train, X_test, y_test, label=""):
     print("Recall:", recall_score(y_test, y_pred, zero_division=0))
     print("F1 Score:", f1_score(y_test, y_pred, zero_division=0))
 
-# Prepare original data
 X, y = prepare_data(df)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 build_and_train_nn(X_train, y_train, X_test, y_test, label="With Stopwords")

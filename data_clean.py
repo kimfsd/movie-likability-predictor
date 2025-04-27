@@ -70,7 +70,7 @@ def no_overview_list(final_df, output_path="unmatched_titles.csv"):
             writer.writerow([title])
 
     print(f"Output {len(unmatched)} movies without overview to: '{output_path}'")
-    
+
 def delete_no_overview(final_df, unmatched_csv_path):
     unmatched_df = pd.read_csv(unmatched_csv_path)
     unmatched_titles = set(unmatched_df.iloc[:, 0].dropna().astype(str).str.strip().str.lower())
@@ -89,7 +89,7 @@ def delete_no_overview(final_df, unmatched_csv_path):
 
     final_df[["movies_reviewed", "ratings", "overviews"]] = final_df.apply(filter_user_row, axis=1)
     final_df["ratings"] = final_df["ratings"].apply(lambda ratings: [1 if isinstance(r, (int, float)) and r >= 4.0 else 0 for r in ratings])
-    final_df = final_df[final_df["movies_reviewed"].apply(len) > 0].reset_index(drop=True)
+    final_df = final_df[final_df["movies_reviewed"].apply(len) >= 10].reset_index(drop=True)
 
     return final_df
 
@@ -122,6 +122,7 @@ final_df = remove_courtesy_tag(final_df)
 
 no_overview_list(final_df, "unmatched_titles.csv")
 final_df = delete_no_overview(final_df, "unmatched_titles.csv")
+
 final_df.to_csv("final_movie_reviews.csv", index=False)
 print("Output successful in: 'final_movie_reviews.csv'")
 
