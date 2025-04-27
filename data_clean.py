@@ -22,6 +22,42 @@ def clean_reviews(ratings_df, films_df, max_reviews=100, max_users=1250):
         "film_name": "movies_reviewed",
         "rating": "ratings"
     })
+    
+    return df_grouped
+    
+def delete_no_overview(final_df, unmatched_csv_path):
+    unmatched_df = pd.read_csv(unmatched_csv_path)
+    unmatched_titles = set(unmatched_df.iloc[:, 0].dropna().astype(str).str.strip().str.lower())
+
+    def filter_user_row(row):
+        filtered = [
+            (movie, rating, overview)
+            for movie, rating, overview in zip(row["movies_reviewed"], row["ratings"], row["overviews"])
+            if isinstance(movie, str) and movie.strip().lower() not in unmatched_titles
+        ]
+        if filtered:
+            movies, ratings, overviews = zip(*filtered)
+            return pd.Series([list(movies), list(ratings), list(overviews)])
+        else:
+            return pd.Series([[], [], []])
+
+    # Clean unmatched titles
+    final_df[["movies_reviewed", "ratings", "overviews"]] = final_df.apply(filter_user_row, axis=1)
+
+    # Binarize ratings
+    final_df["ratings"] = final_df["ratings"].apply(lambda ratings: [1 if isinstance(r, (int, float)) and r >= 4.0 else 0 for r in ratings])
+
+    # Step 1: Keep only users with at least 10 movies
+    final_df = final_df[final_df["movies_reviewed"].apply(len) >= 10].reset_index(drop=True)
+
+    # Step 2: Keep only users with at least 2 reviews for both 0s and 1s
+    def has_minimum_class_counts(ratings, min_per_class=2):
+        counts = pd.Series(ratings).value_counts()
+        return counts.get(0, 0) >= min_per_class and counts.get(1, 0) >= min_per_class
+
+    final_df = final_df[final_df["ratings"].apply(has_minimum_class_counts)].reset_index(drop=True)
+
+    return final_df
 
     return df_grouped
 
@@ -89,9 +125,17 @@ def delete_no_overview(final_df, unmatched_csv_path):
 
     final_df[["movies_reviewed", "ratings", "overviews"]] = final_df.apply(filter_user_row, axis=1)
     final_df["ratings"] = final_df["ratings"].apply(lambda ratings: [1 if isinstance(r, (int, float)) and r >= 4.0 else 0 for r in ratings])
+
     final_df = final_df[final_df["movies_reviewed"].apply(len) >= 10].reset_index(drop=True)
 
+    def has_minimum_class_counts(ratings, min_per_class=2):
+        counts = pd.Series(ratings).value_counts()
+        return counts.get(0, 0) >= min_per_class and counts.get(1, 0) >= min_per_class
+
+    final_df = final_df[final_df["ratings"].apply(has_minimum_class_counts)].reset_index(drop=True)
+
     return final_df
+
 
 def remove_stopwords_and_lowercase(final_df, output_path="final_removed_stop.csv"):
     def clean_overview_list(overview_list):
