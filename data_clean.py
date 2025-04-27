@@ -1,5 +1,10 @@
 import pandas as pd
-import csv, re
+import csv, re, ast
+import nltk
+from nltk.corpus import stopwords
+
+nltk.download('stopwords')
+stop_words = set(stopwords.words('english'))
 
 def clean_reviews(ratings_df, films_df, max_reviews=100, max_users=1250):
     merged_df = pd.merge(ratings_df, films_df[['film_id', 'film_name']], on='film_id', how='left')
@@ -13,7 +18,6 @@ def clean_reviews(ratings_df, films_df, max_reviews=100, max_users=1250):
         "rating": lambda x: list(x)[:max_reviews]
     }).reset_index()
 
-    # in our new dataset, we are calling the tabs "movies_reviewed" and "ratings" respectively
     df_grouped = df_grouped.rename(columns={
         "film_name": "movies_reviewed",
         "rating": "ratings"
@@ -24,7 +28,6 @@ def clean_reviews(ratings_df, films_df, max_reviews=100, max_users=1250):
 def import_overviews(final_df, tmdb_csv_path):
     tmdb_data = pd.read_csv(tmdb_csv_path)
     
-    # from what I saw, these were the column names used in the tmdb file
     title_cols = ['original_title', 'title', 'film_name', 'name']
     title_col = next((col for col in title_cols if col in tmdb_data.columns), None)
 
@@ -42,10 +45,6 @@ def import_overviews(final_df, tmdb_csv_path):
 
     final_df["overviews"] = final_df["movies_reviewed"].apply(get_overviews)
     return final_df
-
-# to remove the Gladstone Gallery tag
-
-""" might have to add more because I saw some other tags (possibly) """
 
 def remove_courtesy_tag(final_df):
     final_df["overviews"] = final_df["overviews"].apply(
@@ -65,21 +64,18 @@ def no_overview_list(final_df, output_path="unmatched_titles.csv"):
                 unmatched.add(title)
 
     with open(output_path, "w", newline='') as f:
-        write = csv.writer(f)
-        write.writerow(["Movie titles without overview"])
+        writer = csv.writer(f)
+        writer.writerow(["Movie titles without overview"])
         for title in sorted(unmatched):
-            write.writerow([title])
+            writer.writerow([title])
 
     print(f"Output {len(unmatched)} movies without overview to: '{output_path}'")
     
-def delete_no_overview(final_output, unmatched_csv_path):
-    # Load and normalize unmatched titles
+def delete_no_overview(final_df, unmatched_csv_path):
     unmatched_df = pd.read_csv(unmatched_csv_path)
     unmatched_titles = set(unmatched_df.iloc[:, 0].dropna().astype(str).str.strip().str.lower())
 
     def filter_user_row(row):
-        # we filter through each of the movies in the MAIN csv
-        # if the movie title is in the unmatched list, then remove the ratings, the movie title, and the overviews
         filtered = [
             (movie, rating, overview)
             for movie, rating, overview in zip(row["movies_reviewed"], row["ratings"], row["overviews"])
@@ -91,26 +87,42 @@ def delete_no_overview(final_output, unmatched_csv_path):
         else:
             return pd.Series([[], [], []])
 
-    final_output[["movies_reviewed", "ratings", "overviews"]] = final_output.apply(filter_user_row, axis=1)
+    final_df[["movies_reviewed", "ratings", "overviews"]] = final_df.apply(filter_user_row, axis=1)
     final_df["ratings"] = final_df["ratings"].apply(lambda ratings: [1 if isinstance(r, (int, float)) and r >= 4.0 else 0 for r in ratings])
-    final_output = final_output[final_output["movies_reviewed"].apply(len) > 0].reset_index(drop=True)
+    final_df = final_df[final_df["movies_reviewed"].apply(len) > 0].reset_index(drop=True)
 
-    return final_output
+    return final_df
+
+def remove_stopwords_and_lowercase(final_df, output_path="final_removed_stop.csv"):
+    def clean_overview_list(overview_list):
+        cleaned_list = []
+        for overview in overview_list:
+            if isinstance(overview, str):
+                words = overview.lower().split()
+                filtered_words = [word for word in words if word not in stop_words]
+                cleaned_overview = " ".join(filtered_words)
+                cleaned_list.append(cleaned_overview)
+            else:
+                cleaned_list.append(overview)
+        return cleaned_list
+
+    final_df_copy = final_df.copy()
+    final_df_copy["overviews"] = final_df_copy["overviews"].apply(clean_overview_list)
+    final_df_copy.to_csv(output_path, index=False)
+    print(f"Output successful in: '{output_path}'")
+
+    return final_df_copy
 
 ratings_df = pd.read_csv("data/ratings.csv")
 films_df = pd.read_csv("data/films.csv", on_bad_lines='skip', engine='python')
 
-# first call that gets the ratings, movies, and user_name(s)
 final_df = clean_reviews(ratings_df, films_df)
-
-# this gets us the overviews! check this function if there is an error!
 final_df = import_overviews(final_df, "data/TMDB_movie_dataset_v11.csv")
 final_df = remove_courtesy_tag(final_df)
 
-# we export the list with no overviews and remove them here
 no_overview_list(final_df, "unmatched_titles.csv")
 final_df = delete_no_overview(final_df, "unmatched_titles.csv")
-
-
 final_df.to_csv("final_movie_reviews.csv", index=False)
 print("Output successful in: 'final_movie_reviews.csv'")
+
+remove_stopwords_and_lowercase(final_df, "final_removed_stop.csv")
