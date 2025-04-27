@@ -157,6 +157,14 @@ def remove_stopwords_and_lowercase(final_df, output_path="final_removed_stop.csv
 
     return final_df_copy
 
+def safe_literal_eval(s):
+    if pd.isna(s) or s is np.nan:
+        return []
+    try:
+        return ast.literal_eval(s)
+    except Exception:
+        return []
+
 ratings_df = pd.read_csv("data/ratings.csv")
 films_df = pd.read_csv("data/films.csv", on_bad_lines='skip', engine='python')
 
