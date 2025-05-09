@@ -1,7 +1,5 @@
 # movie-likability-predictor
 
-Directory Structure:
-
 **_Structure:_**
 
 - The "data" folder hosts the original csv files that we modified in order to get our "final_movie_reviews.csv"
