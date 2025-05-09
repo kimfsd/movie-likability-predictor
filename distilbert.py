@@ -1,5 +1,4 @@
 #distilBERT
-#not using anymore
 
 import pandas as pd
 import numpy as np
@@ -63,12 +62,11 @@ full_reviews_df = pd.DataFrame({
     'overview': overview_list
 })
 
-'''
 LIMIT = 7000  # Set how many reviews you want to keep for quick experiments
 if len(full_reviews_df) > LIMIT:
     full_reviews_df = full_reviews_df.sample(n=LIMIT, random_state=42).reset_index(drop=True)
 print(f"After limiting, {len(full_reviews_df)} reviews used.")
-'''
+
 
 # Post-flatten filter: users must have >=10 reviews
 user_counts = full_reviews_df['user'].value_counts()
