@@ -2,18 +2,19 @@
 
 Directory Structure:
 
-Data Files:
--- The main data file is "final_movie_reviews.csv" which is generated from the "data" directory and some other modified csv files that we generated ourselves
+**_Data Files:_**
+* The main data file is "final_movie_reviews.csv" which is generated from the "data" directory and some other modified csv files that we generated ourselves
 
-Running Code:
--- you could choose the model you want to run by simply doing: python3 (or python) [filename.py]
--- ex) python3 neural_net.py
+**_Running Code:_**
+* you could choose the model you want to run by simply doing: python3 (or python) [filename.py]
+*  ex) python3 neural_net.py
 
-Datasets to Download (if you want to start fresh locally):
+**_Datasets to Download (if you want to start fresh locally):_**
 Letterbox Ratings: https://www.kaggle.com/datasets/freeth/letterboxd-film-ratings?select=ratings.csv
--- you need to have the films.csv and ratings.csv!!!
+* ! You only need these two csv: **films.csv and ratings.csv**
+
 Full TMDB Movies: https://www.kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies
--- more specifically, you need to have "TMDB_movie_dataset_v11.csv"
+* more specifically, you need to have "TMDB_movie_dataset_v11.csv"
 
 Once all datasets are downloaded, put all the csv files into a folder called "data" that you create. Paste all the csv files into the "data" folder and run:
 python3 (or python) data_clean.py to get the "final_movie_reviews.csv"
