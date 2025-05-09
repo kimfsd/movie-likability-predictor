@@ -1,5 +1,3 @@
-# all for bag of words logistic regression
-
 import pandas as pd
 import numpy as np
 import ast
@@ -20,12 +18,11 @@ def safe_literal_eval(s):
         print(f"Failed to parse: {s}")
         raise e
 
-accuracies = []
-precisions = []
-recalls = []
-f1_scores = []
+# Track per-user metrics
+user_metrics = []
 
 for idx, user_row in df.iterrows():
+    user_name = user_row['user_name']
     movies = safe_literal_eval(user_row['movies_reviewed'])
     ratings = safe_literal_eval(user_row['ratings'])
     overviews = safe_literal_eval(user_row['overviews'])
@@ -47,10 +44,10 @@ for idx, user_row in df.iterrows():
 
     y = np.array(y)
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
 
     if len(np.unique(y_train)) < 2:
-        print(f"Skipping user {idx}: only one class present.")
+        print(f"Skipping user {user_name}: only one class present.")
         continue
 
     clf = LogisticRegression(max_iter=1000)
@@ -58,12 +55,31 @@ for idx, user_row in df.iterrows():
 
     y_pred = clf.predict(X_test)
 
-    accuracies.append(accuracy_score(y_test, y_pred))
-    precisions.append(precision_score(y_test, y_pred, zero_division=0))
-    recalls.append(recall_score(y_test, y_pred, zero_division=0))
-    f1_scores.append(f1_score(y_test, y_pred, zero_division=0))
+    acc = accuracy_score(y_test, y_pred)
+    prec = precision_score(y_test, y_pred, zero_division=0)
+    rec = recall_score(y_test, y_pred, zero_division=0)
+    f1 = f1_score(y_test, y_pred, zero_division=0)
 
+    user_metrics.append((user_name, acc, prec, rec, f1))
+
+# After the loop
+accuracies = [x[1] for x in user_metrics]
+precisions = [x[2] for x in user_metrics]
+recalls = [x[3] for x in user_metrics]
+f1_scores = [x[4] for x in user_metrics]
+
+print("\n--- Overall Metrics ---")
 print("Average Accuracy:", np.mean(accuracies))
 print("Average Precision:", np.mean(precisions))
 print("Average Recall:", np.mean(recalls))
 print("Average F1 Score:", np.mean(f1_scores))
+
+# Find the user with the highest accuracy
+best_user = max(user_metrics, key=lambda x: x[1])
+
+print("\n--- Best Performing User ---")
+print(f"User: {best_user[0]}")
+print(f"Accuracy: {best_user[1]:.4f}")
+print(f"Precision: {best_user[2]:.4f}")
+print(f"Recall: {best_user[3]:.4f}")
+print(f"F1 Score: {best_user[4]:.4f}")
