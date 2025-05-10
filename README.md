@@ -16,6 +16,7 @@
 - ex) python3 neural_net.py
 
 **_Datasets to Download (if you want to start fresh locally):_**
+
 Letterbox Ratings: https://www.kaggle.com/datasets/freeth/letterboxd-film-ratings?select=ratings.csv
 
 - ! You only need these two csv: **films.csv and ratings.csv**
