@@ -54,7 +54,6 @@ for idx, user_row in df.iterrows():
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    # let me know if we want to change this because I think the test size is too small for some of the users
     if len(np.unique(y_train)) < 2:
         print(f"Skipping user {idx}: only one class present.")
         continue
